@@ -1,7 +1,3 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- */
 'use strict';
 import React, { Component } from 'react';
 import {
@@ -13,10 +9,23 @@ import {
 } from 'react-native';
 var LoginPage = require('./LoginPage');
 var MainPage = require('./MainPage');
-var PersonPage = require('./PersonPage');
-var NoNavigatorPage = require('./NoNavigatorPage');
+import firebase from 'firebase';
+const config = {
+    apiKey: "AIzaSyDmmTHFjxZf6Aob_B2IZNoUJNCrmoaxn74",
+    authDomain: "alumniproject-b71c2.firebaseapp.com",
+    databaseURL: "https://alumniproject-b71c2.firebaseio.com",
+    projectId: "alumniproject-b71c2",
+    storageBucket: "alumniproject-b71c2.appspot.com",
+    messagingSenderId: "1092386708668"
+};
+firebase.initializeApp(config);
+class App extends React.Component {
 
-class App extends Component {
+    constructor(props) {
+        super(props);
+    }
+
+
     render() {
         return (
             <Navigator
@@ -38,19 +47,7 @@ class App extends Component {
         if (routeId === 'MainPage') {
             return (
                 <MainPage
-                    navigator={navigator} />
-            );
-        }
-        if (routeId === 'PersonPage') {
-            return (
-                <PersonPage
-                    navigator={navigator} />
-            );
-        }
-        if (routeId === 'NoNavigatorPage') {
-            return (
-                <NoNavigatorPage
-                    navigator={navigator} />
+                    navigator={navigator} data={route.data} />
             );
         }
     }

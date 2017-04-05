@@ -6,23 +6,56 @@ import {
     Text,
     TouchableHighlight,
     TextInput,
-    Dimensions
+    Dimensions,
+    ToastAndroid
 } from 'react-native';
 var deviceWidth = Dimensions.get('window').width;
-class LoginPage extends Component {
+import firebase from 'firebase';
+class LoginPage extends React.Component {
       constructor(props) {
         super(props);
         this.state = {
             emailText: '',
             passwordText: '',
             showButtonVisibility : false,
-            passwordVisibility : false
+            passwordVisibility : false,
+            alumniData : null,
+            showWarning : false,
+            warningText : ''
         };
       this.onEmailTextChange = this.onEmailTextChange.bind(this);
       this.onPasswordTextChange = this.onPasswordTextChange.bind(this);
       this.signInClicked = this.signInClicked.bind(this);
       this.onShowPressed = this.onShowPressed.bind(this);
       this.gotoNext = this.gotoNext.bind(this);
+      this.isEmail = this.isEmail.bind(this);
+      this.isSNUEmail = this.isSNUEmail.bind(this);
+      this.authoriseSignIn = this.authoriseSignIn.bind(this);
+      this.dataNotReceived = this.dataNotReceived.bind(this);
+      this.notAnAlumnusWarning = this.notAnAlumnusWarning.bind(this);
+      this.incorrectEmailWarning = this.incorrectEmailWarning.bind(this);
+      this.incorrectPasswordWarning = this.incorrectPasswordWarning.bind(this);
+      this.openHomePage = this.openHomePage.bind(this);
+      this.incorrectSNUEmailWarning = this.incorrectSNUEmailWarning.bind(this);
+      }
+
+    async componentWillMount(){
+        var databaseRef = await firebase.database().ref();
+        if(databaseRef){
+            var values = await databaseRef.once('value');
+            var alumniData = values.val().alumni;
+            this.setState({
+                alumniData : alumniData
+            });
+            ToastAndroid.show('Data Received', ToastAndroid.SHORT);
+        }
+    }
+
+    shouldComponentUpdate(newProps, newState){
+        if(newState.alumniData !== this.state.alumniData){
+            return false;
+        }
+        return true;
     }
 
     onEmailTextChange(text){
@@ -44,7 +77,87 @@ class LoginPage extends Component {
     }
 
     signInClicked(){
+        if(this.isEmail(this.state.emailText)){
+            if(this.isSNUEmail(this.state.emailText)){
+                this.authoriseSignIn(this.state.emailText, this.state.passwordText);
+            } else {
+                this.incorrectSNUEmailWarning();
+            }
+        } else {
+            this.incorrectEmailWarning();
+        }
+    }
+
+    isSNUEmail(emailText){
+        return emailText.endsWith("@snu.edu.in");
+    }
+
+    isEmail(emailText){
+        var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(emailText);
+    }
+
+    authoriseSignIn(email, password){
+        let allAlumniData = this.state.alumniData;
+        if(allAlumniData){
+            var index = allAlumniData.findIndex(x => x.details.emailID === email);
+            if(index > -1 ){
+                let alumnusData = allAlumniData[index];
+                if(alumnusData.details.password === password){
+                    this.openHomePage();
+                } else {
+                    this.incorrectPasswordWarning();
+                }
+            } else {
+                this.notAnAlumnusWarning();
+            }
+        } else {
+            this.dataNotReceived();
+        }
+    }
+
+    dataNotReceived(){
+        this.setState({
+            showWarning : true,
+            warningText : 'Connection error. Please connect to Internet to Sign In'
+        });
+    }
+
+    notAnAlumnusWarning(){
+        this.setState({
+            showWarning : true,
+            warningText : 'Limited to SNU Alumnus only. '
+        });
+    }
+
+    incorrectPasswordWarning(){
+        this.setState({
+            showWarning : true,
+            warningText : 'Please enter the correct password'
+        });
+    }
+
+    incorrectEmailWarning(){
+        this.setState({
+            showWarning : true,
+            warningText : 'Please enter a valid email ID'
+        });
+    }
+
+    openHomePage(){
+        this.setState({
+            showWarning : false,
+            warningText : ''
+        });
         this.gotoNext();
+        //ToastAndroid.show("Sign IN Successful", ToastAndroid.SHORT);
+    }
+
+    incorrectSNUEmailWarning(){
+        this.setState({
+            showWarning : true,
+            warningText : 'Please enter a valid SNU email ID'
+        });
     }
 
     onShowPressed(){
@@ -54,7 +167,8 @@ class LoginPage extends Component {
     }
 
   render() {
-    return (
+      let warningText = this.state.showWarning ? this.state.warningText : "";
+        return (
         <View style={styles.container}>
             <Text style={styles.labelText}>Email address</Text>
             <TextInput
@@ -91,6 +205,7 @@ class LoginPage extends Component {
                 : null}
 
             </View>
+            <Text style={styles.warningText}>{warningText}</Text>
             <TouchableHighlight underlayColor={'#004d84'} style={styles.signIn} onPress={this.signInClicked}>
                 <Text style={{color: 'white'}}>SIGN IN</Text>
             </TouchableHighlight>
@@ -100,7 +215,8 @@ class LoginPage extends Component {
   gotoNext() {
     this.props.navigator.push({
       id: 'MainPage',
-      name: 'MainPage'
+      name: 'MainPage',
+      data : this.state.alumniData
     });
   }
 }
@@ -117,6 +233,13 @@ var styles= StyleSheet.create({
         height:30,
         color:'#ffffff',
         fontSize:16
+    },
+    warningText : {
+        width : deviceWidth-108,
+        height:15,
+        color:'#ffffff',
+        fontSize:12,
+        textAlign: 'center'
     },
     textInputStyle : {
         width : deviceWidth-100,
@@ -135,7 +258,7 @@ var styles= StyleSheet.create({
         fontSize:12
     },
     signIn : {
-        marginTop : 20,
+        marginTop : 10,
         alignItems: 'center',
         justifyContent: 'center',
         height : 40,
