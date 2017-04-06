@@ -5,7 +5,8 @@ import {
     StyleSheet,
     Text,
     View,
-    Navigator
+    Navigator,
+    Platform
 } from 'react-native';
 var LoginPage = require('./LoginPage');
 var MainPage = require('./MainPage');
@@ -32,7 +33,10 @@ class App extends React.Component {
                 initialRoute={{id: 'LoginPage', name: 'Index'}}
                 renderScene={this.renderScene.bind(this)}
                 configureScene={(route) => {
-            return Navigator.SceneConfigs.FloatFromBottom;
+                    var transition;
+                    transition = Navigator.SceneConfigs.FloatFromBottomAndroid;
+                    transition.gestures = null
+                    return transition
           }} />
         );
     }
@@ -47,7 +51,7 @@ class App extends React.Component {
         if (routeId === 'MainPage') {
             return (
                 <MainPage
-                    navigator={navigator} data={route.data} />
+                    navigator={navigator} data={route.data} profileMail={route.profileMail} />
             );
         }
     }

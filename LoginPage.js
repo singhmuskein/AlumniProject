@@ -7,7 +7,9 @@ import {
     TouchableHighlight,
     TextInput,
     Dimensions,
-    ToastAndroid
+    ToastAndroid,
+    Keyboard,
+    Platform
 } from 'react-native';
 var deviceWidth = Dimensions.get('window').width;
 import firebase from 'firebase';
@@ -47,7 +49,9 @@ class LoginPage extends React.Component {
             this.setState({
                 alumniData : alumniData
             });
-            ToastAndroid.show('Data Received', ToastAndroid.SHORT);
+            if(Platform.OS !== 'ios'){
+                ToastAndroid.show('Data Received', ToastAndroid.SHORT);
+            }
         }
     }
 
@@ -149,8 +153,8 @@ class LoginPage extends React.Component {
             showWarning : false,
             warningText : ''
         });
+        Keyboard.dismiss();
         this.gotoNext();
-        //ToastAndroid.show("Sign IN Successful", ToastAndroid.SHORT);
     }
 
     incorrectSNUEmailWarning(){
@@ -168,36 +172,76 @@ class LoginPage extends React.Component {
 
   render() {
       let warningText = this.state.showWarning ? this.state.warningText : "";
+      let isIOS = false;
+      if(Platform.OS === 'ios'){
+          isIOS = true;
+      }
+
         return (
         <View style={styles.container}>
-            <Text style={styles.labelText}>Email address</Text>
-            <TextInput
-              style={styles.textInputStyle}
-              tintColor={'#ffffff'}
-              multiline ={false}
-              editable={true}
-              autoCorrect={false}
-              placeholder = {"example@snu.edu.in"}
-              keyboardType='email-address'
-              underlineColorAndroid={"#ffffff"}
-              onChangeText={(text) => this.onEmailTextChange(text)}
-              placeholderTextColor= {'#ffffff'}
-            />
             <View style={{marginLeft : 8}}>
-                <Text style={[{marginTop : 5}, styles.labelText]}>Password</Text>
-                <TextInput
-                    style={styles.textInputStyle}
-                    tintColor={'#ffffff'}
-                    multiline ={false}
-                    editable={true}
-                    autoCorrect={false}
-                    secureTextEntry={this.state.passwordVisibility ? false : true}
-                    placeholder = {"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
-                    keyboardType='default'
-                    underlineColorAndroid={"#ffffff"}
-                    onChangeText={(text) => this.onPasswordTextChange(text)}
-                    placeholderTextColor= {'#ffffff'}
-                />
+                <Text style={styles.labelText}>Email address</Text>
+                {isIOS ?
+                    <View style={{borderBottomColor: '#ffffff',borderBottomWidth: 1 }}>
+                        <TextInput
+                            style={styles.textInputStyle}
+                            multiline ={false}
+                            editable={true}
+                            autoCorrect={false}
+                            placeholder = {"example@snu.edu.in"}
+                            keyboardType='email-address'
+                            onChangeText={(text) => this.onEmailTextChange(text)}
+                            placeholderTextColor= {'#ffffff'}
+                        />
+                    </View>
+                    :
+                    <TextInput
+                        style={styles.textInputStyle}
+                        tintColor={'#ffffff'}
+                        multiline ={false}
+                        editable={true}
+                        autoCorrect={false}
+                        placeholder = {"example@snu.edu.in"}
+                        keyboardType='email-address'
+                        underlineColorAndroid={"#ffffff"}
+                        onChangeText={(text) => this.onEmailTextChange(text)}
+                        placeholderTextColor= {'#ffffff'}
+                    />
+                }
+
+            </View>
+            <View style={{marginLeft : 8}}>
+                <Text style={[{marginTop : 8}, styles.labelText]}>Password</Text>
+                {isIOS ?
+                    <View style={{borderBottomColor: '#ffffff',borderBottomWidth: 1 }}>
+                        <TextInput
+                            style={styles.textInputStyle}
+                            multiline ={false}
+                            editable={true}
+                            autoCorrect={false}
+                            secureTextEntry={this.state.passwordVisibility ? false : true}
+                            placeholder = {"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
+                            keyboardType='default'
+                            onChangeText={(text) => this.onPasswordTextChange(text)}
+                            placeholderTextColor= {'#ffffff'}
+                        />
+                    </View>
+                    :
+                    <TextInput
+                        style={styles.textInputStyle}
+                        tintColor={'#ffffff'}
+                        multiline ={false}
+                        editable={true}
+                        autoCorrect={false}
+                        secureTextEntry={this.state.passwordVisibility ? false : true}
+                        placeholder = {"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
+                        keyboardType='default'
+                        underlineColorAndroid={"#ffffff"}
+                        onChangeText={(text) => this.onPasswordTextChange(text)}
+                        placeholderTextColor= {'#ffffff'}
+                    />
+
+                }
                 {this.state.showButtonVisibility && !this.state.passwordVisibility ?
                     <TouchableHighlight underlayColor={'#0067b3'} style={styles.showButton} onPress={this.onShowPressed}>
                         <Text style={styles.showStyle}>show</Text>
@@ -216,7 +260,8 @@ class LoginPage extends React.Component {
     this.props.navigator.push({
       id: 'MainPage',
       name: 'MainPage',
-      data : this.state.alumniData
+      data : this.state.alumniData,
+      profileMail : this.state.emailText
     });
   }
 }
